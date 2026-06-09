@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rendicontazione Ore</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="noise"></div>
+<div class="container">
+
+  <header>
+    <div class="header-left">
+      <h1>Rendicontazione Ore</h1>
+      <p id="headerSub">Attività giornaliera per fascia oraria</p>
+    </div>
+    <div class="header-actions">
+      <span id="saveIndicator" style="font-size:11px;color:var(--muted);align-self:center;font-family:'DM Mono',monospace;opacity:0;transition:opacity .4s"></span>
+      <button class="btn btn-danger btn-sm" onclick="clearCurrentMonth()">✕ Svuota mese</button>
+      <button class="btn btn-secondary btn-sm" onclick="openAdoModal()">☁ ADO</button>
+      <button class="btn btn-secondary btn-sm" onclick="openTagManager()">⚙ Tag</button>
+      <button class="btn btn-secondary btn-sm" onclick="openAddModal()">＋ Aggiungi mese</button>
+      <button class="btn btn-primary" onclick="downloadXLSX()">↓ Scarica Excel</button>
+    </div>
+  </header>
+
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="coverage-bar" id="coverageBar"></div>
+  <div class="day-stats-bar" id="dayStatsBar" style="display:none"></div>
+
+  <div class="month-nav">
+    <div class="month-tabs" id="monthTabs"></div>
+  </div>
+
+  <div class="table-scroll-wrap">
+    <div id="tableArea"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+    <button class="btn btn-secondary btn-sm" onclick="scrollToToday()">↗ Oggi</button>
+  </div>
+
+  <div class="legend">
+    <span id="legendTags"></span>
+    <span class="legend-item"><span class="ldot" style="background:var(--today-border);opacity:.6"></span> Oggi</span>
+    <span class="legend-item"><span class="ldot" style="background:#2a2a35;border:1px solid #3a3a4a"></span> Weekend</span>
+    <span class="legend-item"><span class="ldot" style="background:var(--lunch-bg);border:1px dashed #3a2c14"></span> Pausa pranzo</span>
+    <span class="legend-item"><span class="ldot" style="background:var(--holiday-bg);border:1px dashed var(--holiday-border)"></span> Festività</span>
+  </div>
+</div>
+
+<!-- DAY POPOVER -->
+<div class="day-popover" id="dayPopover">
+  <h4 id="dpTitle">Giorno <span id="dpSubtitle"></span></h4>
+  <div class="dp-section-label">Tipo attività</div>
+  <div id="dpTypes"></div>
+  <div class="dp-section-label">Fascia oraria</div>
+  <div class="dp-range-row">
+    <label>Da</label>
+    <select id="dpFrom"></select>
+    <label>A</label>
+    <select id="dpTo"></select>
+  </div>
+  <button class="dp-allday-btn" onclick="dpSelectAllDay()">☀ Tutto il giorno</button>
+  <button class="dp-allday-btn" style="margin-bottom:8px;border-color:#3a1a24;color:#fa6c8e" onclick="clearDay()">✕ Svuota giorno</button>
+  <div class="dp-actions">
+    <button class="btn btn-secondary btn-sm" onclick="closeDayPop()">Annulla</button>
+    <button class="btn btn-primary btn-sm" onclick="applyDayPop()">Applica</button>
+  </div>
+</div>
+
+<!-- ADO SETTINGS MODAL -->
+<div class="modal-overlay" id="adoModal">
+  <div class="modal" style="width:440px" onclick="event.stopPropagation()">
+    <h3>☁ Azure DevOps</h3>
+    <label>Organization URL</label>
+    <input type="url" id="adoOrgUrl" placeholder="https://dev.azure.com/myorg" autocomplete="off">
+    <label>Personal Access Token</label>
+    <input type="password" id="adoPat" placeholder="Token con permessi Work Items (Read)" autocomplete="new-password">
+    <div id="adoStatus" style="font-size:11px;font-family:'DM Mono',monospace;min-height:18px;margin:-4px 0 14px;color:var(--muted)"></div>
+    <div id="adoCacheInfo" style="font-size:11px;font-family:'DM Mono',monospace;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.7;display:none"></div>
+    <div id="adoProjectColorList" style="margin-bottom:14px;display:none"></div>
+    <div style="margin-bottom:12px">
+      <button class="btn btn-secondary btn-sm" style="width:100%" onclick="closeAdoModal();openMigraModal()">↔ Migra slot custom → ADO</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeAdoModal()">Annulla</button>
+      <button class="btn btn-danger btn-sm" onclick="clearAdoCache()">✕ Cache</button>
+      <button class="btn btn-primary btn-sm" id="adoSaveBtn" onclick="saveAndSyncAdo()">Salva & Sincronizza</button>
+    </div>
+  </div>
+</div>
+
+<!-- MIGRA MODAL -->
+<div class="modal-overlay" id="migraModal">
+  <div class="modal" style="width:440px" onclick="event.stopPropagation()">
+    <h3>↔ Migra slot custom → ADO</h3>
+
+    <div class="migra-section">
+      <div class="migra-section-title">Da (Custom)</div>
+      <label>Tipo attività</label>
+      <select id="migraFromType" onchange="renderMigraPreview()"></select>
+      <label>Descrizione contiene <span style="color:var(--muted);font-weight:400;font-size:10px">(opzionale)</span></label>
+      <input type="text" id="migraFromDesc" placeholder="filtra per testo…" oninput="renderMigraPreview()">
+    </div>
+
+    <div class="migra-section">
+      <div class="migra-section-title">A (Azure DevOps)</div>
+      <label>Progetto</label>
+      <select class="ado-select" id="migraToProject" onchange="migraProjectChanged()" style="margin-bottom:8px">
+        <option value="">— Progetto —</option>
+      </select>
+      <label>PBI <span style="color:var(--muted);font-weight:400;font-size:10px">(opzionale)</span></label>
+      <select class="ado-select" id="migraToPbi" disabled onchange="migraPbiChanged()" style="margin-bottom:8px">
+        <option value="">— PBI —</option>
+      </select>
+      <label>Task <span style="color:var(--muted);font-weight:400;font-size:10px">(opzionale)</span></label>
+      <select class="ado-select" id="migraToTask" disabled style="margin-bottom:4px">
+        <option value="">— Task —</option>
+      </select>
+      <div id="migraTaskLoading" style="display:none;font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;padding:3px 2px">⟳ Caricamento task…</div>
+    </div>
+
+    <div id="migraPreview" style="font-size:12px;font-family:'DM Mono',monospace;min-height:18px;margin-bottom:12px"></div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeMigraModal()">Annulla</button>
+      <button class="btn btn-primary btn-sm" id="migraApplyBtn" onclick="applyMigration()" disabled>Sostituisci</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAG MANAGER MODAL -->
+<div class="modal-overlay" id="tagModal">
+  <div class="modal" style="width:380px" onclick="event.stopPropagation()">
+    <h3>Gestisci tag attività</h3>
+    <div class="tag-list" id="tagList"></div>
+    <div class="tag-add-row">
+      <div class="tag-add-new-color" id="newColorSwatch" style="background:#7c6cfa">
+        <input type="color" id="newTagColor" value="#7c6cfa"
+               oninput="document.getElementById('newColorSwatch').style.background=this.value">
+      </div>
+      <input type="text" class="tag-add-new-input" id="newTagName"
+             placeholder="Nome nuovo tag…" maxlength="24"
+             onkeydown="if(event.key==='Enter') addTag()">
+      <button class="tag-add-btn" onclick="addTag()">＋</button>
+    </div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-primary btn-sm" onclick="closeTagManager()">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MONTH MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>Aggiungi mese</h3>
+    <label>Anno</label>
+    <input type="number" id="newYear" min="2020" max="2040" value="2026">
+    <label>Mese</label>
+    <select id="newMonth">
+      <option value="0">Gennaio</option><option value="1">Febbraio</option>
+      <option value="2">Marzo</option><option value="3">Aprile</option>
+      <option value="4">Maggio</option><option value="5">Giugno</option>
+      <option value="6">Luglio</option><option value="7">Agosto</option>
+      <option value="8">Settembre</option><option value="9">Ottobre</option>
+      <option value="10">Novembre</option><option value="11">Dicembre</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal()">Annulla</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmAddMonth()">Aggiungi</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT POPOVER -->
+<div class="edit-popover" id="editPopover">
+  <div class="pop-drag-handle" id="popDragHandle">
+    <div class="pop-drag-dots">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+  <div id="epTypes"></div>
+  <div class="ep-actions">
+    <button class="btn btn-danger btn-sm" onclick="deleteCell()">Svuota</button>
+    <button class="btn btn-secondary btn-sm" onclick="closePop()">Annulla</button>
+    <button class="btn btn-primary btn-sm" onclick="saveCell()">Salva</button>
+  </div>
+  <div class="pop-resize-handle" id="popResizeHandle">
+    <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+      <path d="M9 1L1 9M9 5L5 9M9 9" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
