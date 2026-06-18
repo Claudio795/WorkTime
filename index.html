@@ -19,6 +19,7 @@
     </div>
     <div class="header-actions">
       <span id="saveIndicator" style="font-size:11px;color:var(--muted);align-self:center;font-family:'DM Mono',monospace;opacity:0;transition:opacity .4s"></span>
+      <button class="btn btn-secondary btn-sm" onclick="openFerieModal()">🏖 Ferie</button>
       <button class="btn btn-danger btn-sm" onclick="clearCurrentMonth()">✕ Svuota mese</button>
       <button class="btn btn-secondary btn-sm" onclick="openAdoModal()">☁ ADO</button>
       <button class="btn btn-secondary btn-sm" onclick="openTagManager()">⚙ Tag</button>
@@ -192,6 +193,28 @@
     <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
       <path d="M9 1L1 9M9 5L5 9M9 9" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round"/>
     </svg>
+  </div>
+</div>
+
+<!-- FERIE MODAL -->
+<div class="modal-overlay" id="ferieModal">
+  <div class="modal" style="width:400px" onclick="event.stopPropagation()">
+    <h3>🏖 Inserisci periodo ferie</h3>
+    <div style="display:flex;gap:12px;margin-bottom:14px">
+      <div style="flex:1">
+        <label>Dal</label>
+        <input type="date" id="ferieFrom" onchange="updateFeriePreview()">
+      </div>
+      <div style="flex:1">
+        <label>Al</label>
+        <input type="date" id="ferieTo" onchange="updateFeriePreview()">
+      </div>
+    </div>
+    <div id="feriePreview" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);min-height:18px;margin-bottom:14px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeFerieModal()">Annulla</button>
+      <button class="btn btn-primary btn-sm" id="ferieApplyBtn" onclick="applyFerie()" disabled>Inserisci ferie</button>
+    </div>
   </div>
 </div>
 

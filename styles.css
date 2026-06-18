@@ -121,6 +121,18 @@ thead th {
   color: var(--muted); border-bottom: 1px solid var(--border);
   font-family: 'DM Mono', monospace; position: sticky; top: 0;
   background: var(--surface); z-index: 2; width: 100px;
+  overflow: hidden; position: relative;
+}
+thead th .col-resize-handle {
+  position: absolute; right: 0; top: 0; bottom: 0; width: 6px;
+  cursor: col-resize; z-index: 4;
+  background: transparent;
+  transition: background .12s;
+}
+thead th .col-resize-handle:hover,
+thead th .col-resize-handle.resizing {
+  background: var(--accent);
+  opacity: .5;
 }
 thead th:first-child { text-align: left; padding-left: 14px; width: 66px; position: sticky; left: 0; z-index: 3; }
 th.col-divider, td.col-divider { width: 12px; min-width: 12px; padding: 0; background: var(--bg); border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
@@ -499,7 +511,7 @@ thead th.col-clickable:hover .day-label { color: var(--accent) !important; }
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 10px; padding: 10px 16px; margin-bottom: 14px;
 }
-.coverage-bar.open { display: flex; }
+.coverage-bar.open { display: flex; max-height: 280px; overflow-y: auto; }
 .coverage-header {
   display: flex; align-items: center; justify-content: space-between;
   font-size: 11px; font-weight: 600; color: var(--muted);
@@ -551,3 +563,135 @@ thead th.col-day-selected { background: rgba(124,108,250,.14) !important; border
 }
 .stat-sm .stat-value { font-size: 15px; }
 .stat-sm .stat-label { font-size: 9px; }
+
+.slot-ado-card {
+  margin-top: 8px;
+  border-left: 3px solid;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.slot-ado-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.slot-ado-card-proj {
+  font-size: 9.5px;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.slot-ado-card-state {
+  font-size: 9px;
+  font-family: 'DM Mono', monospace;
+  opacity: .85;
+}
+.slot-ado-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.3;
+}
+.slot-ado-card-hours {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+.slot-ado-hour-chip {
+  font-size: 10px;
+  font-family: 'DM Mono', monospace;
+  color: var(--muted);
+  background: var(--bg);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.slot-ado-hour-chip b {
+  color: var(--text);
+}
+.slot-ado-progress-wrap {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+.slot-ado-progress-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s;
+}
+
+/* SCROLLBAR — stile coerente con il tema dark */
+.slot-editor,
+.tag-list,
+.day-stats-body,
+.modal,
+.edit-popover,
+.day-popover {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.slot-editor::-webkit-scrollbar,
+.tag-list::-webkit-scrollbar,
+.day-stats-body::-webkit-scrollbar,
+.modal::-webkit-scrollbar,
+.edit-popover::-webkit-scrollbar,
+.day-popover::-webkit-scrollbar { width: 4px; height: 4px; }
+.slot-editor::-webkit-scrollbar-track,
+.tag-list::-webkit-scrollbar-track,
+.day-stats-body::-webkit-scrollbar-track,
+.modal::-webkit-scrollbar-track,
+.edit-popover::-webkit-scrollbar-track,
+.day-popover::-webkit-scrollbar-track { background: transparent; }
+.slot-editor::-webkit-scrollbar-thumb,
+.tag-list::-webkit-scrollbar-thumb,
+.day-stats-body::-webkit-scrollbar-thumb,
+.modal::-webkit-scrollbar-thumb,
+.edit-popover::-webkit-scrollbar-thumb,
+.day-popover::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+.slot-editor::-webkit-scrollbar-thumb:hover,
+.tag-list::-webkit-scrollbar-thumb:hover,
+.day-stats-body::-webkit-scrollbar-thumb:hover,
+.modal::-webkit-scrollbar-thumb:hover,
+.edit-popover::-webkit-scrollbar-thumb:hover,
+.day-popover::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ADO TASK CELL — enhanced visibility */
+.slot-bar-ado {
+  padding: 3px 6px;
+  gap: 0;
+}
+.slot-bar-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  min-height: 0;
+}
+.slot-task-title {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'Sora', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+.slot-task-sub {
+  font-size: 8.5px;
+  font-family: 'DM Mono', monospace;
+  color: rgba(232,232,240,.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  letter-spacing: .03em;
+}
